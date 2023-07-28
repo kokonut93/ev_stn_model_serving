@@ -32,7 +32,7 @@ def index():
         return 'index'
 
 
-@app.route('/predict', methods=['POST'])
+@app.route('/inference', methods=['POST'])
 def predict():
     if request.method == 'POST':
         file = request.files['file']
