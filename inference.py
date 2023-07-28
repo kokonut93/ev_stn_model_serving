@@ -1,5 +1,4 @@
-import os
-import json
+import io
 import torch
 from torchvision import models
 import torchvision.transforms as transforms
@@ -8,32 +7,38 @@ from flask import Flask, jsonify, request
 
 
 app = Flask(__name__)
-imagenet_class_index = json.load(open('imagenet_class_index.json'))
 model = torch.jit.load('model.pt')
 
 
-def preprocess(img_path = "img_129.jpg"):
-    img = Image.open(img_path).convert('L')
+def preprocess(file):
+    # with open(file, 'rb') as f:
+    #     img_path = f.read()
+    img_path = file.read()
+    img = Image.open(io.BytesIO(img_path))
     transform = transforms.Compose([transforms.Grayscale(), transforms.ToTensor()])
     return transform(img).unsqueeze(0)
 
 
-def get_prediction(image_path):
-    tensor = preprocess(image_path)
+def get_prediction(file):
+    tensor = preprocess(file)
     outputs = model.forward(tensor)
     _, y_hat = outputs.max(1)
-    predicted_idx = str(y_hat.item())
-    return imagenet_class_index[predicted_idx]
+    predicted_class = str(y_hat.item())
+    return predicted_class
+
+@app.route('/')
+def index():
+    if request.method == 'GET':
+        return 'index'
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
     if request.method == 'POST':
         file = request.files['file']
-        image_path = file.read()
-        class_id, class_name = get_prediction(image_path=image_path)
-        return jsonify({'class_id': class_id, 'class_name': class_name})
+        evcs_class = get_prediction(file = file)
+        return jsonify({'evcs_class': evcs_class})
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host = '0.0.0.0', port = 5000)
