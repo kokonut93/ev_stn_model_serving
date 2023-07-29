@@ -19,7 +19,7 @@ def preprocess(file):
     return transform(img).unsqueeze(0)
 
 
-def get_prediction(file):
+def get_inference(file):
     tensor = preprocess(file)
     outputs = model.forward(tensor)
     _, y_hat = outputs.max(1)
@@ -32,11 +32,11 @@ def index():
         return 'index'
 
 
-@app.route('/predict', methods=['POST'])
-def predict():
+@app.route('/inference', methods=['POST'])
+def inference():
     if request.method == 'POST':
         file = request.files['file']
-        evcs_class = get_prediction(file = file)
+        evcs_class = get_inference(file = file)
         return jsonify({'evcs_class': evcs_class})
 
 
