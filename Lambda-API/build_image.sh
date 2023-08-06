@@ -1,9 +1,3 @@
-# clone git in AWS EC2
-sudo yum update -y
-sudo yum install git -y
-mkdir api
-git clone https://github.com/uoon97/model-api.git
-
 # Install Docker
 sudo yum install docker -y
 sudo systemctl start docker
