@@ -1,9 +1,3 @@
-# Install Docker
-sudo yum install docker -y
-sudo systemctl start docker
-sudo usermod -aG docker $USER
-newgrp docker
-
 # Build Docker Image in AWS EC2
 cd model-api/lambda-api
 docker build -t model_api:0.0 .
