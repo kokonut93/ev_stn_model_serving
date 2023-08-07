@@ -33,7 +33,11 @@ def index():
 
 
 @app.route('/inference', methods=['POST'])
+<<<<<<< HEAD:inference.py
+def predict():
+=======
 def inference():
+>>>>>>> dfbb6b7d84f718e28ccadb2b5c21585a1eee0349:EC2-Flask-API/inference.py
     if request.method == 'POST':
         file = request.files['file']
         evcs_class = get_inference(file = file)

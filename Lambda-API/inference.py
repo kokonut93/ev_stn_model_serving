@@ -12,7 +12,7 @@ def handler(event, context):
         },
     }
     """
-    model = torch.load('model.pt')
+    model = torch.jit.load('model.pt')
     
     inputs =  json_to_tensor(event)
     outputs = model(inputs)

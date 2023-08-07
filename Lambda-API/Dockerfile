@@ -2,13 +2,12 @@
 
 FROM public.ecr.aws/lambda/python:3.9
 
-COPY model.pt /model/
-COPY requirements.txt /model/
-COPY utils.py /model/
-COPY inference.py /model/
+COPY ./* ${LAMBDA_TASK_ROOT}/
 
-WORKDIR /model
+WORKDIR /${LAMBDA_TASK_ROOT}
 
 RUN pip3 install -r requirements.txt
+
+ENTRYPOINT ["/lambda-entrypoint.sh"]
 
 CMD ["inference.handler"]
