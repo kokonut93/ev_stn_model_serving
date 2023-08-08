@@ -4,14 +4,15 @@ import torch
 
 def json_to_tensor(json_data):
     X = []
-    for key in json_data.keys():
-        X.append(list(json_data[key].values()))
+    sids = list(json_data.keys())
+    for sid in sids:
+        X.append(list(json_data[sid].values()))
 
-    return torch.tensor(X)
+    return sids, torch.tensor(X)
 
-def tensor_to_json(outputs):
+def tensor_to_json(sids, outputs):
     dict = {}
-    for idx, output in enumerate(outputs):
-        dict[idx] = int(output)
+    for idx in range(len(outputs)):
+        dict[sids[idx]] = int(outputs[idx].argmax())
     
     return json.dumps(dict)

@@ -13,9 +13,8 @@ def handler(event, context):
     }
     """
     model = torch.jit.load('model.pt')
-    
-    inputs =  json_to_tensor(event)
+    sids, inputs =  json_to_tensor(event)
     outputs = model(inputs)
 
-    return tensor_to_json(outputs)
+    return tensor_to_json(sids, outputs)
 
