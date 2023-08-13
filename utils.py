@@ -2,7 +2,6 @@ from datetime import datetime
 import json
 import torch
 
-
 def get_dt():
     now = datetime.now()
     dt = datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
