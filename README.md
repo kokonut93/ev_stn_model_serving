@@ -29,8 +29,9 @@ After setting aws configure, run the shell script file to push image: <br>
     sh push_image.sh
 
 After create aws lambda function, connect your DB (by creating your private.db_info and inserting values into table) <br>
-( lambda function configuration: Memory(2048 MB), Runtime(1m) )
-Lastly, create test event as belows.
+Lastly, create test event as belows. <br>
+( lambda function configuration: Memory(2048 MB), Runtime(1m) ) 
+
 
     event = {}
 

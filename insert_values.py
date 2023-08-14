@@ -1,12 +1,13 @@
-# Create Table
+# Create Station's Table
 import pymysql
 import pandas as pd
 from private import db_info
 
 host, user, password, db = db_info()
 
-attributes = pd.read_csv('data/evcs_attributes.csv')
-embedding = pd.read_csv('data/evcs_embedding.csv')
+attributes = pd.read_csv('data/station_attributes.csv')
+embedding = pd.read_csv('data/station_embedding.csv')
+sequence = pd.read_csv('data/evcs_sequence.csv')
 
 connection = pymysql.connect(
     host=host,
@@ -50,13 +51,40 @@ UMAP_8 DOUBLE NOT NULL
 with connection.cursor() as cursor:
     cursor.execute(create_query.replace('\n', ''))
 
+# Insert Values into Station's Table
 for idx in range(attributes.shape[0]):
     atts = attributes.iloc[idx, :].values.tolist()
-    emb = embedding.iloc[idx, :].values.tolist()[1:]
-    values = tuple([idx] + atts + emb)
+    emb = embedding.iloc[idx, :].values.tolist()[1:-1]
+    values = tuple([int(atts[-1])] + atts[:-1] + emb)
     insert_query = "INSERT INTO station VALUES {};"
     
     with connection.cursor() as cursor:
         cursor.execute(insert_query.format(values))
 
 connection.commit()
+
+# Create Sequence's Table
+create_query = '''
+CREATE TABLE IF NOT EXISTS sequence (
+Sid INT NOT NULL, 
+Time DATETIME NOT NULL,
+Occupancy INT NOT NULL,
+PRIMARY KEY (Sid, Time)
+)
+'''
+
+with connection.cursor() as cursor:
+    cursor.execute(create_query.replace('\n', ''))
+
+# Insert Values into Sequence's Table
+for idx, row in sequence.iterrows():
+    elements = row.values.tolist()
+    values = tuple([int(elements[-1])] + [elements[0]] + [elements[-2]])
+
+    insert_query = "INSERT INTO sequence VALUES {};"
+    
+    with connection.cursor() as cursor:
+        cursor.execute(insert_query.format(values))
+        connection.commit()
+
+connection.close()

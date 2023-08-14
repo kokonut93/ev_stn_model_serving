@@ -6,10 +6,28 @@ import torch
 from private import db_info
 
 def get_dt():
-    now = datetime.now()
-    dt = datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
-    dt = dt.strftime('%Y-%m-%d %H:%M:%S')
-    return dt
+    now = datetime.datetime.now()
+    dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
+    str_dt = dt.strftime('%Y-%m-%d %H:%M:%S')
+    return dt, str_dt
+
+def get_in_dt(n):
+    in_dt = []
+    dt, _ = get_dt()
+    for i in range(n):
+        if i == 0 or i == n-1:
+            idt = dt - datetime.timedelta(minutes = 20*(i+1))
+            in_dt.append(idt.strftime('%Y-%m-%d %H:%M:%S'))
+    return in_dt
+
+def get_out_dt(n):
+    out_dt = []
+    dt, _ = get_dt()
+    for i in range(n):
+        if i == 0 or i == n-1:
+            odt = dt + datetime.timedelta(minutes = 20*(i+1))
+            out_dt.append(odt.strftime('%Y-%m-%d %H:%M:%S'))
+    return out_dt
 
 def json2tensor(json_data):
     X = []
