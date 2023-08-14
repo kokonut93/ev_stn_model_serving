@@ -26,9 +26,7 @@ def tensor2json(sids, outputs):
     
     return json.dumps(dict)
 
-
-
-def getXjson():
+def selectXjson(time):
     host, user, password, db = db_info()
 
     connection = pymysql.connect(
@@ -57,7 +55,16 @@ def getXjson():
 
     atts = df.loc[:, atts_cols].to_dict('index')
     embed = df.loc[:, embed_cols].to_dict('index')
-    return atts, embed
+
+    select_query = f"SELECT * FROM sequence WHERE Datetime = {time}"
+
+    with connection.cursor() as cursor:
+        cursor.execute(select_query)
+        result = cursor.fetchall()
+
+    df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
+
+    return atts, embed, df
 
 def updateYjson(y_json):
     host, user, password, db = db_info()

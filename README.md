@@ -19,6 +19,8 @@ Clone git repo on EC2:
 
 Run shell script files to build docker image:
 
+    cd model-serving
+    sh install_docker.sh
     sh build_image.sh
 
 After setting aws configure, run the shell script file to push image: <br>
