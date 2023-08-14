@@ -1,6 +1,6 @@
 # model inference API
 import torch
-from utils import json_to_tensor, tensor_to_json
+from utils import json2tensor, tensor2json, getXjson, updateYjson
 
 def handler(event, context):
     """
@@ -13,8 +13,8 @@ def handler(event, context):
     }
     """
     model = torch.jit.load('model.pt')
-    sids, inputs =  json_to_tensor(event)
+    sids, inputs =  json2tensor(event)
     outputs = model(inputs)
 
-    return tensor_to_json(sids, outputs)
+    return tensor2json(sids, outputs)
 
