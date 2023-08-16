@@ -1,16 +1,21 @@
 # model inference API
 import torch
-from utils import get_dt, json2tensor, tensor2json, selectXjson, updateYjson
+from utils import db2Rseq, db2Hseq, dt2T, db2S, y2db
 
 def handler(event, context):
     """
     event = {}
     """
-    time = get_dt()
-    model = torch.jit.load('model.pt')
-    X_base, X_embed, seq = selectXjson(time)
-    sids, inputs =  json2tensor(event)
-    outputs = model(inputs)
 
-    return tensor2json(sids, outputs)
+    # import input from database
+    r_seq = db2Rseq()
+    h_seq = db2Hseq()
+    t = dt2T()
+    s = db2S()
+
+    # export output to database
+    model = torch.jit.load('model.pt')
+    outputs = model(r_seq, h_seq, t, s)
+    
+    return y2db(outputs)
 
