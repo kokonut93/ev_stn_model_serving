@@ -1,50 +1,40 @@
-from datetime import datetime
-import pandas as pd
-import pymysql
-import json
-import torch
 from private import db_info
+import pandas as pd
+import numpy as np
+import datetime
+import pymysql
+import torch
 
+# get current datetime
 def get_dt():
     now = datetime.datetime.now()
     dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
     str_dt = dt.strftime('%Y-%m-%d %H:%M:%S')
     return dt, str_dt
 
-def get_in_dt(n):
-    in_dt = []
+# get realtime datetime
+def get_rdt(n):
+    dt_realtime = []
+    dt, _ = get_dt()
+    for i in range(n-1, -1, -1):
+        if i == 0 or i == n-1:
+            rdt = dt - datetime.timedelta(minutes = 20*(i+1))
+            rdt = datetime.datetime(rdt.year-1, rdt.month-6,ridt.day, rdt.hour, rdt.minute, 00)
+            dt_realtime.append(rdt.strftime('%Y-%m-%d %H:%M:%S'))
+    return dt_realtime
+
+# get historical datetime
+def get_hdt(n):
+    dt_historical = []
     dt, _ = get_dt()
     for i in range(n):
-        if i == 0 or i == n-1:
-            idt = dt - datetime.timedelta(minutes = 20*(i+1))
-            in_dt.append(idt.strftime('%Y-%m-%d %H:%M:%S'))
-    return in_dt
+        hdt = dt - datetime.timedelta(days = 7*(i+1))
+        hdt = datetime.datetime(hdt.year-1, hdt.month-6, hdt.day, hdt.hour, hdt.minute, 00)
+        dt_historical.append(hdt.strftime('%Y-%m-%d %H:%M:%S'))
+    return dt_historical
 
-def get_out_dt(n):
-    out_dt = []
-    dt, _ = get_dt()
-    for i in range(n):
-        if i == 0 or i == n-1:
-            odt = dt + datetime.timedelta(minutes = 20*(i+1))
-            out_dt.append(odt.strftime('%Y-%m-%d %H:%M:%S'))
-    return out_dt
-
-def json2tensor(json_data):
-    X = []
-    sids = list(json_data.keys())
-    for sid in sids:
-        X.append(list(json_data[sid].values()))
-
-    return sids, torch.tensor(X)
-
-def tensor2json(sids, outputs):
-    dict = {}
-    for idx in range(len(outputs)):
-        dict[sids[idx]] = int(outputs[idx].argmax())
-    
-    return json.dumps(dict)
-
-def selectXjson(time):
+# connect to database by pymysql
+def db_connect():
     host, user, password, db = db_info()
 
     connection = pymysql.connect(
@@ -56,86 +46,92 @@ def selectXjson(time):
         port = 3306
     )
 
+    return connection
+
+# get realtime sequence inputs from database
+def db2Rseq():
+    connection = db_connect()
+    start, end = get_rdt(12)
+    select_query = f"SELECT * FROM sequence WHERE Time BETWEEN '{start}' AND '{end}'"
+
+    with connection.cursor() as cursor:
+        cursor.execute(select_query)
+        result = cursor.fetchall()
+        connection.close()
+
+    df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
+    return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, -1, 1))
+
+# get historical sequence inputs from database
+def db2Hseq():
+    connection = db_connect()
+    values = tuple(get_hdt(4))
+    select_query = f'SELECT * FROM sequence WHERE Time IN {values}'
+
+    with connection.cursor() as cursor:
+        cursor.execute(select_query)
+        result = cursor.fetchall()
+        connection.close()
+
+    df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
+    return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, -1, 1))
+
+# get time index
+def dt2T():
+    connection = db_connect()
+    select_query = "SELECT * FROM sequence LIMIT 1"
+    with connection.cursor() as cursor:
+        cursor.execute(select_query)
+        result = cursor.fetchall()
+        connection.close()
+
+    dt, _ = get_dt()
+    time_idx = dt.hour * 3 + dt.minute // 20
+    weekday = dt.weekday()
+    dow = weekday//5
+    T = np.array([time_idx, weekday, dow]).reshape(1, -1)
+    T = np.repeat(T, repeats = len(cursor.description)-1, axis = 0)
+    return torch.tensor(T)
+
+# get station inputs from database
+def db2S():
+    connection = db_connect()
     select_query = "SELECT * FROM station"
 
     with connection.cursor() as cursor:
         cursor.execute(select_query)
         result = cursor.fetchall()
+        connection.close()
 
     df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
-    atts_cols = ['Latitude', 'Longitude', 'Capacity', 'Slow_Chargers',
-        'Fast_Chargers', 'Mean_trip', 'Length_city', 'Length_highway',
-        'Length_local', 'Length_national', 'Indust_ratio', 'Etc_ratio',
-        'Green_ratio', 'Commerce_ratio', 'Reside_ratio']
+    attr_cols = ['Sid', 'Latitude', 'Longitude', 'Capacity', 'Slow_Chargers',
+                 'Fast_Chargers', 'Mean_trip', 'Length_city', 'Length_highway',
+                 'Length_local', 'Length_national', 'Indust_ratio', 'Etc_ratio',
+                 'Green_ratio', 'Commerce_ratio', 'Reside_ratio']
 
-    embed_cols = ['UMAP_1', 'UMAP_2', 'UMAP_3', 
-            'UMAP_4', 'UMAP_5', 'UMAP_6', 'UMAP_7', 'UMAP_8']
+    embed_cols = ['Sid', 'UMAP_1', 'UMAP_2', 'UMAP_3', 'UMAP_4', 
+                  'UMAP_5', 'UMAP_6', 'UMAP_7', 'UMAP_8']
 
-    atts = df.loc[:, atts_cols].to_dict('index')
-    embed = df.loc[:, embed_cols].to_dict('index')
+    attrs = torch.tensor(df.loc[:, attr_cols].values)
+    embed = torch.tensor(df.loc[:, embed_cols].values)
 
-    select_query = f"SELECT * FROM sequence WHERE Datetime = {time}"
+    return attrs, embed
+
+# update outputs data to database
+def y2db(outputs):
+    connection = db_connect()
+
+    select_query = "SELECT sid FROM station"
 
     with connection.cursor() as cursor:
         cursor.execute(select_query)
         result = cursor.fetchall()
-
-    df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
-
-    return atts, embed, df
-
-def updateYjson(y_json):
-    host, user, password, db = db_info()
-
-    connection = pymysql.connect(
-        host=host,
-        user=user,
-        password=password,
-        db=db,
-        charset='utf8',
-        port = 3306
-    )
-
-    create_query = '''
-CREATE TABLE occupancy (
-Sid INT NOT NULL PRIMARY KEY, 
-Occupancy_20 INT NOT NULL,
-Occupancy_60 INT NOT NULL,
-Occupancy_120 INT NOT NULL,
-FOREIGN KEY (sid) REFERENCES station(sid)
-)
-'''
-    select_query = "SELECT sid FROM station"
-
-    insert_query = "INSERT INTO station VALUES {};"
-
-    update_query = "UPDATE occupancy SET Occupancy_20 = %d Occupancy_60 = %d Occupancy_120 = %d WHERE Sid = %d"
-
-    try:
-        with connection.cursor() as cursor:
-                cursor.execute(create_query.replace('\n', ''))
-                cursor.execute(select_query)
-                result = cursor.fetchall()
-
-        insert_query = "INSERT INTO occupancy VALUES {};"
-        for idx in result:
-            values = tuple(list(idx) + y_json[idx[0]])
-            with connection.cursor() as cursor:
-                cursor.execute(insert_query.format(values))
-            
-        connection.commit()
-        connection.close()
     
-    except:
+    update_query = "UPDATE occupancy SET Occupancy_20 = %s, Occupancy_60 = %s, Occupancy_120 = %s WHERE Sid = %s"
+    for sid in result:
+        values = tuple(outputs[sid[0]] + list(sid))
         with connection.cursor() as cursor:
-            cursor.execute(select_query)
-            result = cursor.fetchall()
+            cursor.execute(update_query, values)
         
-        update_query = "UPDATE occupancy SET Occupancy_20 = %s, Occupancy_60 = %s, Occupancy_120 = %s WHERE Sid = %s"
-        for idx in result:
-            values = tuple(y_json[idx[0]] + list(idx))
-            with connection.cursor() as cursor:
-                cursor.execute(update_query, values)
-            
-        connection.commit()
-        connection.close()
+    connection.commit()
+    connection.close()
