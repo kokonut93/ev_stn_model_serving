@@ -3,7 +3,7 @@ import pandas as pd
 import pymysql
 import json
 import torch
-from test.private import db_info
+from private import db_info
 
 def get_dt():
     now = datetime.datetime.now()
