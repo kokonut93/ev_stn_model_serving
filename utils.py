@@ -19,7 +19,7 @@ def get_rdt(n):
     for i in range(n-1, -1, -1):
         if i == 0 or i == n-1:
             rdt = dt - datetime.timedelta(minutes = 20*(i+1))
-            rdt = datetime.datetime(rdt.year-1, rdt.month-6,ridt.day, rdt.hour, rdt.minute, 00)
+            rdt = datetime.datetime(rdt.year-1, rdt.month-6,rdt.day, rdt.hour, rdt.minute, 00)
             dt_realtime.append(rdt.strftime('%Y-%m-%d %H:%M:%S'))
     return dt_realtime
 
@@ -82,7 +82,7 @@ def dt2T():
     select_query = "SELECT * FROM sequence LIMIT 1"
     with connection.cursor() as cursor:
         cursor.execute(select_query)
-        result = cursor.fetchall()
+        _ = cursor.fetchall()
         connection.close()
 
     dt, _ = get_dt()
