@@ -1,3 +1,5 @@
 /data
+private.py
 test/private.py
 /__pycache__
+test/__pycache__

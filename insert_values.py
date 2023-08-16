@@ -1,7 +1,7 @@
 # Create Station's Table
 import pymysql
 import pandas as pd
-from private import db_info
+from test.private import db_info
 
 host, user, password, db = db_info()
 

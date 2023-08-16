@@ -3,7 +3,7 @@ import pandas as pd
 import pymysql
 import json
 import torch
-from private import db_info
+from test.private import db_info
 
 def get_dt():
     now = datetime.datetime.now()
@@ -125,9 +125,17 @@ FOREIGN KEY (sid) REFERENCES station(sid)
             
         connection.commit()
         connection.close()
-
+    
     except:
-        with connection.curosr() as cursor:
-            cursor.execute(update_query, tuple(y_json[idx[0]], list(idx)))
-            connection.commit()
-            connection.close()
+        with connection.cursor() as cursor:
+            cursor.execute(select_query)
+            result = cursor.fetchall()
+        
+        update_query = "UPDATE occupancy SET Occupancy_20 = %s, Occupancy_60 = %s, Occupancy_120 = %s WHERE Sid = %s"
+        for idx in result:
+            values = tuple(y_json[idx[0]] + list(idx))
+            with connection.cursor() as cursor:
+                cursor.execute(update_query, values)
+            
+        connection.commit()
+        connection.close()
