@@ -4,7 +4,7 @@ from utils import db2Rseq, db2Hseq, dt2T, db2S, y2db
 
 def handler(event, context):
     """
-    event = {}
+    event = {model.pt}
     """
 
     # import input from database

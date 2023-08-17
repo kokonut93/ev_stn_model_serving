@@ -2,11 +2,9 @@
 
 FROM public.ecr.aws/lambda/python:3.9
 
-WORKDIR /${LAMBDA_TASK_ROOT}
+COPY ./* ${LAMBDA_TASK_ROOT}/
 
-RUN yum update -y
-RUN yum install git -y
-RUN git clone https://github.com/hwangpeng-sam/model-serving.git .
+WORKDIR /${LAMBDA_TASK_ROOT}
 
 RUN pip3 install -r requirements.txt
 

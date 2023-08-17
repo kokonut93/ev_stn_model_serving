@@ -7,7 +7,7 @@ def create_station(attrs, embed):
     connection = db_connect()
     create_query = "CREATE TABLE IF NOT EXISTS station ({}PRIMARY KEY (Sid))"
     cols = attrs.columns.tolist()[2:] + embed.columns.tolist()[2:]
-    values = ''.join(['Sid INT NOT NULL, ' 'Sname VARCHAR(100) NOT NULL, '] + [f'{col} DOUBLE NOT NULL, ' for col in cols])
+    values = ''.join(['Sid INT NOT NULL, ' 'Sname VARCHAR(100) NOT NULL, ', 'Address VARCHAR(100) NOT NULL, '] + [f'{col} DOUBLE NOT NULL, ' for col in cols])
 
     with connection.cursor() as cursor:
         cursor.execute(create_query.format(values))
@@ -15,7 +15,7 @@ def create_station(attrs, embed):
     for idx in range(attrs.shape[0]):
         attr = attrs.iloc[idx, :].values.tolist()
         emb = embed.iloc[idx, :].values.tolist()
-        values = tuple(attr + emb[2:])
+        values = tuple(attr[:2] + ['ㄱ'] + attr[2:] + emb[2:])
         insert_query = "INSERT INTO station VALUES {};"
         
         with connection.cursor() as cursor:
