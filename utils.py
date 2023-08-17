@@ -104,13 +104,13 @@ def db2S():
         connection.close()
 
     df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
-    attr_cols = ['Sid', 'Latitude', 'Longitude', 'Capacity', 'Slow_Chargers',
-                 'Fast_Chargers', 'Mean_trip', 'Length_city', 'Length_highway',
-                 'Length_local', 'Length_national', 'Indust_ratio', 'Etc_ratio',
-                 'Green_ratio', 'Commerce_ratio', 'Reside_ratio']
+    attr_cols = ['Sid', 'latitude', 'longitude', 'capacity', 'slow',
+                 'fast', 'mean_trip', 'length_city', 'length_highway',
+                 'length_local', 'length_national', 'indust_ratio', 'etc_ratio',
+                 'green_ratio', 'commerce_ratio', 'reside_ratio']
 
-    embed_cols = ['Sid', 'UMAP_1', 'UMAP_2', 'UMAP_3', 'UMAP_4', 
-                  'UMAP_5', 'UMAP_6', 'UMAP_7', 'UMAP_8']
+    embed_cols = ['Sid', 'umap_1', 'umap_2', 'umap_3', 'umap_4', 
+                  'umap_5', 'umap_6', 'umap_7', 'umap_8']
 
     attrs = torch.tensor(df.loc[:, attr_cols].values)
     embed = torch.tensor(df.loc[:, embed_cols].values)
