@@ -48,6 +48,19 @@ def db_connect():
 
     return connection
 
+# get station id from database
+def db2Sid():
+    connection = db_connect()
+    select_query = "SELECT Sid FROM station"
+
+    with connection.cursor() as cursor:
+        cursor.execute(select_query)
+        result = cursor.fetchall()
+        connection.close()
+
+    sid = [res[0] for res in result]
+    return sid
+
 # get realtime sequence inputs from database
 def db2Rseq():
     connection = db_connect()
@@ -119,17 +132,11 @@ def db2S():
 
 # update outputs data to database
 def y2db(outputs):
+    sid = db2Sid()
     connection = db_connect()
-
-    select_query = "SELECT sid FROM station"
-
-    with connection.cursor() as cursor:
-        cursor.execute(select_query)
-        result = cursor.fetchall()
-    
-    update_query = "UPDATE occupancy SET Occupancy_20 = %s, Occupancy_60 = %s, Occupancy_120 = %s WHERE Sid = %s"
-    for sid in result:
-        values = tuple(outputs[sid[0]] + list(sid))
+    update_query = "UPDATE occupancy SET Occupancy_20 = %s WHERE Sid = %s"
+    for values in list(zip(np.array(outputs), sid)):
+        
         with connection.cursor() as cursor:
             cursor.execute(update_query, values)
         
