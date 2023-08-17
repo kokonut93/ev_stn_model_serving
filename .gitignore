@@ -1,5 +1,4 @@
 /data
 private.py
-test/private.py
+/test
 /__pycache__
-test/__pycache__
