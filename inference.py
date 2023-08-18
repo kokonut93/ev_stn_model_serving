@@ -1,6 +1,4 @@
 # model inference API
-import torch
-from model import MultiSeqBase
 from utils import *
 
 def handler(event, context):
@@ -13,8 +11,8 @@ def handler(event, context):
     
     # import input from database
     r_seq = db2Rseq()
-    h_seq = db2Hseq()
-    t = dt2T()
+    h_seq = db2Hseq(4, 6)
+    t = dt2T(6)
     s_attrs, _ = db2S()
 
     # export output to database

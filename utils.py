@@ -1,38 +1,40 @@
-from model import MultiSeqBase
-from private import db_info
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 import numpy as np
 import datetime
 import pymysql
 import torch
 
+from model import MultiSeqBase
+from private import db_info
+
 # get current datetime
 def get_dt():
     now = datetime.datetime.now()
     dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
-    str_dt = dt.strftime('%Y-%m-%d %H:%M:%S')
-    return dt, str_dt
+    dt -= relativedelta(months=18)
+    return dt
 
 # get realtime datetime
 def get_rdt(n):
     dt_realtime = []
-    dt, _ = get_dt()
+    dt = get_dt()
     for i in range(n-1, -1, -1):
         if i == 0 or i == n-1:
             rdt = dt - datetime.timedelta(minutes = 20*(i+1))
-            rdt = datetime.datetime(rdt.year-1, rdt.month-6,rdt.day, rdt.hour, rdt.minute, 00)
             dt_realtime.append(rdt.strftime('%Y-%m-%d %H:%M:%S'))
     return dt_realtime
 
-# get historical datetime
-def get_hdt(n):
-    dt_historical = []
-    dt, _ = get_dt()
-    for i in range(n):
+# get historic datetime
+def get_hdt(h, n):
+    dt_historic = []
+    dt = get_dt()
+    for i in range(h):
         hdt = dt - datetime.timedelta(days = 7*(i+1))
-        hdt = datetime.datetime(hdt.year-1, hdt.month-6, hdt.day, hdt.hour, hdt.minute, 00)
-        dt_historical.append(hdt.strftime('%Y-%m-%d %H:%M:%S'))
-    return dt_historical
+        for j in range(n):
+            hsdt = hdt + datetime.timedelta(minutes = 20*(j+1))
+            dt_historic.append(hsdt.strftime('%Y-%m-%d %H:%M:%S'))
+    return dt_historic
 
 # connect to database by pymysql
 def db_connect():
@@ -77,9 +79,9 @@ def db2Rseq():
     return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, -1, 1))
 
 # get historical sequence inputs from database
-def db2Hseq():
+def db2Hseq(h_step, pred_step):
     connection = db_connect()
-    values = tuple(get_hdt(4))
+    values = tuple(get_hdt(h_step, pred_step))
     select_query = f'SELECT * FROM sequence WHERE Time IN {values}'
 
     with connection.cursor() as cursor:
@@ -88,23 +90,28 @@ def db2Hseq():
         connection.close()
 
     df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
-    return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, -1, 1))
+    return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, pred_step, h_step, 1))
 
 # get time index
-def dt2T():
+def dt2T(pred_step):
     connection = db_connect()
     select_query = "SELECT * FROM sequence LIMIT 1"
     with connection.cursor() as cursor:
-        cursor.execute(select_query)
+        cursor.execute(select_query) 
         _ = cursor.fetchall()
         connection.close()
 
-    dt, _ = get_dt()
-    time_idx = dt.hour * 3 + dt.minute // 20
-    weekday = dt.weekday()
-    dow = weekday//5
-    T = np.array([time_idx, weekday, dow]).reshape(1, -1)
-    T = np.repeat(T, repeats = len(cursor.description)-1, axis = 0)
+    dt = get_dt()
+    T = []
+    for i in range(pred_step):
+        t_dt = dt + datetime.timedelta(minutes=20*(i+1))
+        time_idx = t_dt.hour * 3 + t_dt.minute // 20
+        dow = t_dt.weekday()
+        weekend = dow//5
+        T.append([time_idx, dow, weekend])
+    
+    T = np.array(T)
+    T = np.repeat(T[np.newaxis, :, :], repeats = len(cursor.description)-1, axis = 0)
     return torch.tensor(T)
 
 # get station inputs from database
@@ -147,6 +154,7 @@ def y2db(outputs):
     sid = db2Sid()
     connection = db_connect()
     update_query = "UPDATE occupancy SET Occupancy_20 = %s WHERE Sid = %s"
+    
     for values in list(zip(np.array(outputs), sid)):
         
         with connection.cursor() as cursor:
