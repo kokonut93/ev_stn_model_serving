@@ -1,3 +1,4 @@
+from model import MultiSeqBase
 from private import db_info
 import pandas as pd
 import numpy as np
@@ -129,6 +130,17 @@ def db2S():
     embed = torch.tensor(df.loc[:, embed_cols].values)
 
     return attrs, embed
+
+# load model
+def load_model():
+    model = MultiSeqBase(n_labels=3, hidden_size=32, embedding_dim=4, dropout_p=0.2)
+    optim = torch.optim.Adam(model.parameters(), weight_decay=1e-3)
+
+    checkpoint = torch.load('test_model_and_optimizer.pth')
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optim.load_state_dict(checkpoint['optimizer_state_dict'])
+
+    return model
 
 # update outputs data to database
 def y2db(outputs):
