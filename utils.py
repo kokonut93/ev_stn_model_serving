@@ -151,14 +151,17 @@ def load_model():
 
 # update outputs data to database
 def y2db(outputs):
+    outputs = outputs.reshape(-1, 6)
+    
     sid = db2Sid()
     connection = db_connect()
-    update_query = "UPDATE occupancy SET Occupancy_20 = %s WHERE Sid = %s"
+    update_query = "UPDATE occupancy SET {}"
     
-    for values in list(zip(np.array(outputs), sid)):
-        
+    for i in range(len(sid)):
+        output = outputs[i].tolist()
+        values = ' '.join([', '.join([f'Occupancy_{20*(j+1)} = {output[j]}' for j in range(len(output))])] + [f'WHERE Sid = {sid[i]}'])
         with connection.cursor() as cursor:
-            cursor.execute(update_query, values)
+            cursor.execute(update_query.format(values))
         
     connection.commit()
     connection.close()
