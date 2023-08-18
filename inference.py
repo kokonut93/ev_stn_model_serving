@@ -1,7 +1,7 @@
 # model inference API
 import torch
 from model import MultiSeqBase
-from utils import db2Sid, db2Rseq, db2Hseq, dt2T, db2S, y2db
+from utils import db2Rseq, db2Hseq, dt2T, db2S, y2db
 
 
 
@@ -24,11 +24,9 @@ def handler(event, context):
     r_seq = db2Rseq()
     h_seq = db2Hseq()
     t = dt2T()
-    s_attrs, s_embed = db2S()
+    s_attrs, _ = db2S()
 
     # export output to database
-    output = model(r_seq.float(), h_seq.float(), t.int(), s_attrs.float()).argmax(dim=1)
-    sid = db2Sid()
-    
+    output = model(r_seq.float(), h_seq.float(), t.int(), s_attrs.float()).argmax(dim=1)    
     return y2db(output)
 
