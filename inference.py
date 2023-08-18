@@ -13,6 +13,7 @@ def handler(event, context):
     s_attrs, _ = db2S()
 
     # export output to database
-    output = model(r_seq.float(), h_seq.float(), t.int(), s_attrs.float())
+    # output = model(r_seq.float(), h_seq.float(), t.int(), s_attrs.float())
+    output = dt2T(2).reshape(-1, 6)
     return y2db(output)
 
