@@ -4,7 +4,7 @@ from utils import *
 def handler(event, context):
 
     # Load model and optimizer
-    model = load_model()
+    # model = load_model()
     
     # import input from database
     r_seq = db2Rseq()
