@@ -51,9 +51,9 @@ def create_sequence(seq):
 # Create Occupancy's Table
 def create_occupancy():
     connection = db_connect()
+    minutes = [20, 40, 60, 120]
     create_query = "CREATE TABLE IF NOT EXISTS occupancy ({}FOREIGN KEY (Sid) REFERENCES station(Sid))"
-    # values = ''.join(['Sid INT NOT NULL PRIMARY KEY, '] + [f'Occupancy_{i} INT, ' for i in range(20, 21)])
-    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, '] + [f'Occupancy_{i} INT, ' for i in range(20, 121, 20)])
+    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, '] + [f'Occupancy_{i} INT, ' for i in minutes])
 
     select_query = "SELECT sid FROM station"
 
@@ -66,7 +66,7 @@ def create_occupancy():
         insert_query = "INSERT INTO occupancy VALUES {};"
         for idx in result:
             # values = tuple(list(idx) + [1])
-            values = tuple(list(idx) + [0, 0, 0, 0, 0, 0])
+            values = tuple(list(idx) + [0, 0, 0, 0])
             with connection.cursor() as cursor:
                 cursor.execute(insert_query.format(values))
             
@@ -79,6 +79,6 @@ if __name__=="__main__":
     embed = pd.read_csv('data/station_embed.csv')
     seq = pd.read_csv('data/station_seq.csv')
 
-    create_station(attrs, embed)
-    create_sequence(seq)
+    # create_station(attrs, embed)
+    # create_sequence(seq)
     create_occupancy()

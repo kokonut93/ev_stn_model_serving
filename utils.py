@@ -153,7 +153,7 @@ def load_model():
 
 # update outputs data to database
 def y2db(outputs):
-    outputs = outputs.reshape(-1, 6)
+    outputs = outputs.reshape(-1, 4)
     
     sid = db2Sid()
     connection = db_connect()

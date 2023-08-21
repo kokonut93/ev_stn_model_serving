@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 class MultiSeqBase(nn.Module):
-    def __init__(self, n_labels, hidden_size, embedding_dim, dropout_p):
+    def __init__(self, hidden_size, embedding_dim, dropout_p):
         super().__init__()
         self.lstm_r1 = nn.LSTM(1, hidden_size, 1, batch_first=True)
         self.fc_r1 = nn.Linear(hidden_size, 16)
@@ -17,11 +17,11 @@ class MultiSeqBase(nn.Module):
         self.we_embedding = nn.Embedding(num_embeddings=2, embedding_dim=embedding_dim)
 
         self.fc_b1 = nn.Linear(3*embedding_dim, 128)
-        self.fc_b2 = nn.Linear(128, 128)
-        self.fc_b3 = nn.Linear(128, 64)
+        self.fc_b2 = nn.Linear(128, 64)
+        self.fc_b3 = nn.Linear(64, 64)
 
         self.fc_cat = nn.Linear(32+64, 64)
-        self.top = nn.Linear(64,n_labels)
+        self.top = nn.Linear(64, 1)
         self.dropout = nn.Dropout(p=dropout_p)
 
     def forward(self, r, h, t, s):
