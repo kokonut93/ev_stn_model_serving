@@ -1,14 +1,18 @@
 from dateutil.relativedelta import relativedelta
+from private import db_info
 import pandas as pd
 import numpy as np
 import datetime
 import pymysql
 import torch
 
-from conti_model import MultiSeqBase
-from private import db_info
-
 # get current datetime
+def get_now():
+    now = datetime.datetime.now()
+    dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
+
+# get input's datetime
 def get_dt():
     now = datetime.datetime.now()
     dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
@@ -21,7 +25,7 @@ def get_rdt(n):
     dt = get_dt()
     for i in range(n-1, -1, -1):
         if i == 0 or i == n-1:
-            rdt = dt - datetime.timedelta(hours = -5, minutes = 20*(i+1))
+            rdt = dt - datetime.timedelta(minutes = 20*(i+1))
             dt_realtime.append(rdt.strftime('%Y-%m-%d %H:%M:%S'))
     return dt_realtime
 
@@ -32,7 +36,7 @@ def get_hdt(h, minutes):
     for i in range(h):
         hdt = dt - datetime.timedelta(days = 7*(i+1))
         for j in minutes:
-            hsdt = hdt + datetime.timedelta(hours = 5, minutes = j)
+            hsdt = hdt + datetime.timedelta(minutes = j)
             dt_historic.append(hsdt.strftime('%Y-%m-%d %H:%M:%S'))
     return dt_historic
 
@@ -106,7 +110,7 @@ def dt2T():
     T = []
     minutes = [20, 40, 60, 120]
     for i in minutes:
-        t_dt = dt + datetime.timedelta(hours = 5, minutes=i)
+        t_dt = dt + datetime.timedelta(minutes=i)
         time_idx = t_dt.hour * 3 + t_dt.minute // 20
         dow = t_dt.weekday()
         weekend = dow//5
@@ -139,19 +143,6 @@ def db2S():
     embed = torch.tensor(df.loc[:, embed_cols].values)
 
     return attrs, embed
-
-# load model
-def load_model():
-    model = MultiSeqBase(hidden_size = 16, embedding_dim = 4, dropout_p = 0.2)
-    optim = torch.optim.Adam(model.parameters(), weight_decay=1e-3)
-
-    checkpoint = torch.load('test_model_and_optimizer_conti.pth')
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optim.load_state_dict(checkpoint['optimizer_state_dict'])
-
-    return model
-
-# model output의 인덱스에 따라 빈 값은 0으로 처리하고 (722, 4)의 shape으로 변환하는 함수 필요.
 
 # update outputs data to database
 from utils import *

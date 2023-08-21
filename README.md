@@ -22,7 +22,7 @@ Time
 
 Outputs are as follows.
 
-- Occupancy_20 ~ Occupancy_120 / class(good, normal, bad) : dims = (6, 3)
+- Occupancy_20, 40, 60, 120 / continuous : dims = (4, 1)
 
 <br>
 
