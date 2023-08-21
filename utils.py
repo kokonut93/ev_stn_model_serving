@@ -5,7 +5,7 @@ import datetime
 import pymysql
 import torch
 
-# from conti_model import MultiSeqBase
+from conti_model import MultiSeqBase
 from private import db_info
 
 # get current datetime
@@ -21,18 +21,18 @@ def get_rdt(n):
     dt = get_dt()
     for i in range(n-1, -1, -1):
         if i == 0 or i == n-1:
-            rdt = dt - datetime.timedelta(minutes = 20*(i+1))
+            rdt = dt - datetime.timedelta(hours = -5, minutes = 20*(i+1))
             dt_realtime.append(rdt.strftime('%Y-%m-%d %H:%M:%S'))
     return dt_realtime
 
 # get historic datetime
-def get_hdt(h, n):
+def get_hdt(h, minutes):
     dt_historic = []
     dt = get_dt()
     for i in range(h):
         hdt = dt - datetime.timedelta(days = 7*(i+1))
-        for j in range(n):
-            hsdt = hdt + datetime.timedelta(minutes = 20*(j+1))
+        for j in minutes:
+            hsdt = hdt + datetime.timedelta(hours = 5, minutes = j)
             dt_historic.append(hsdt.strftime('%Y-%m-%d %H:%M:%S'))
     return dt_historic
 
@@ -79,9 +79,10 @@ def db2Rseq():
     return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, -1, 1))
 
 # get historical sequence inputs from database
-def db2Hseq(h_step, pred_step):
+def db2Hseq(h_step):
     connection = db_connect()
-    values = tuple(get_hdt(h_step, pred_step))
+    minutes = [20, 40, 60, 120]
+    values = tuple(get_hdt(h_step, minutes))
     select_query = f'SELECT * FROM sequence WHERE Time IN {values}'
 
     with connection.cursor() as cursor:
@@ -90,10 +91,10 @@ def db2Hseq(h_step, pred_step):
         connection.close()
 
     df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
-    return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, pred_step, h_step, 1))
+    return torch.tensor(df.set_index('Time').T.values.reshape(len(cursor.description)-1, len(minutes), h_step, 1))
 
 # get time index
-def dt2T(pred_step):
+def dt2T():
     connection = db_connect()
     select_query = "SELECT * FROM sequence LIMIT 1"
     with connection.cursor() as cursor:
@@ -103,8 +104,9 @@ def dt2T(pred_step):
 
     dt = get_dt()
     T = []
-    for i in range(pred_step):
-        t_dt = dt + datetime.timedelta(minutes=20*(i+1))
+    minutes = [20, 40, 60, 120]
+    for i in minutes:
+        t_dt = dt + datetime.timedelta(hours = 5, minutes=i)
         time_idx = t_dt.hour * 3 + t_dt.minute // 20
         dow = t_dt.weekday()
         weekend = dow//5
@@ -139,29 +141,32 @@ def db2S():
     return attrs, embed
 
 # load model
-# def load_model():
-#     model = MultiSeqBase(hidden_size = 32, embedding_dim = 4, dropout_p = 0.2)
-#     optim = torch.optim.Adam(model.parameters(), weight_decay=1e-3)
+def load_model():
+    model = MultiSeqBase(hidden_size = 16, embedding_dim = 4, dropout_p = 0.2)
+    optim = torch.optim.Adam(model.parameters(), weight_decay=1e-3)
 
-#     checkpoint = torch.load('test_model_and_optimizer_conti.pth')
-#     model.load_state_dict(checkpoint['model_state_dict'])
-#     optim.load_state_dict(checkpoint['optimizer_state_dict'])
+    checkpoint = torch.load('test_model_and_optimizer_conti.pth')
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optim.load_state_dict(checkpoint['optimizer_state_dict'])
 
-#     return model
+    return model
 
-# model output의 인덱스에 따라 빈 값은 0으로 처리하고 (722, 6)의 shape으로 변환하는 함수 필요.
+# model output의 인덱스에 따라 빈 값은 0으로 처리하고 (722, 4)의 shape으로 변환하는 함수 필요.
 
 # update outputs data to database
+from utils import *
+
 def y2db(outputs):
     outputs = outputs.reshape(-1, 4)
     
     sid = db2Sid()
     connection = db_connect()
     update_query = "UPDATE occupancy SET {}"
-    
+    minutes = [20, 40, 60, 120]
+
     for i in range(len(sid)):
         output = outputs[i].tolist()
-        values = ' '.join([', '.join([f'Occupancy_{20*(j+1)} = {output[j]}' for j in range(len(output))])] + [f'WHERE Sid = {sid[i]}'])
+        values = ' '.join([', '.join([f'Occupancy_{m} = {output[j]}' for j, m in enumerate(minutes)])] + [f'WHERE Sid = {sid[i]}'])
         with connection.cursor() as cursor:
             cursor.execute(update_query.format(values))
         

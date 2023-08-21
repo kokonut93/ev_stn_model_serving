@@ -7,7 +7,7 @@ def create_station(attrs, embed):
     connection = db_connect()
     create_query = "CREATE TABLE IF NOT EXISTS station ({}PRIMARY KEY (Sid))"
     cols = attrs.columns.tolist()[3:] + embed.columns.tolist()[2:]
-    values = ''.join(['Sid INT NOT NULL, ' 'Sname VARCHAR(100) NOT NULL, ', 'Address VARCHAR(100) NOT NULL, '] + [f'{col} DOUBLE NOT NULL, ' for col in cols])
+    values = ''.join(['Sid INT NOT NULL, ' 'Sname VARCHAR(100) NOT NULL, ', 'Address VARCHAR(100) NOT NULL, '] + [f'{col} FLOAT NOT NULL, ' for col in cols])
 
     with connection.cursor() as cursor:
         cursor.execute(create_query.format(values))
@@ -31,7 +31,7 @@ def create_sequence(seq):
     connection = db_connect()
     
     create_query = "CREATE TABLE IF NOT EXISTS sequence ({}PRIMARY KEY (Time))"
-    values = ''.join(['Time DATETIME NOT NULL, '] + [f'Sid_{col} INT NOT NULL, ' for col in seq.columns[1:]])
+    values = ''.join(['Time DATETIME NOT NULL, '] + [f'Sid_{col} DOUBLE NOT NULL, ' for col in seq.columns[1:]])
 
     with connection.cursor() as cursor:
         cursor.execute(create_query.format(values))
@@ -53,7 +53,7 @@ def create_occupancy():
     connection = db_connect()
     minutes = [20, 40, 60, 120]
     create_query = "CREATE TABLE IF NOT EXISTS occupancy ({}FOREIGN KEY (Sid) REFERENCES station(Sid))"
-    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, '] + [f'Occupancy_{i} INT, ' for i in minutes])
+    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, '] + [f'Occupancy_{i} FLOAT, ' for i in minutes])
 
     select_query = "SELECT sid FROM station"
 
@@ -77,8 +77,8 @@ def create_occupancy():
 if __name__=="__main__":
     attrs = pd.read_csv('data/station_attrs.csv')
     embed = pd.read_csv('data/station_embed.csv')
-    seq = pd.read_csv('data/station_seq.csv')
+    seq = pd.read_csv('data/station_seq_conti.csv')
 
-    # create_station(attrs, embed)
-    # create_sequence(seq)
+    create_station(attrs, embed)
+    create_sequence(seq)
     create_occupancy()
