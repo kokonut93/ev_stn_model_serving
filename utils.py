@@ -5,7 +5,7 @@ import datetime
 import pymysql
 import torch
 
-from conti_model import MultiSeqBase
+# from conti_model import MultiSeqBase
 from private import db_info
 
 # get current datetime
@@ -139,15 +139,15 @@ def db2S():
     return attrs, embed
 
 # load model
-def load_model():
-    model = MultiSeqBase(hidden_size = 32, embedding_dim = 4, dropout_p = 0.2)
-    optim = torch.optim.Adam(model.parameters(), weight_decay=1e-3)
+# def load_model():
+#     model = MultiSeqBase(hidden_size = 32, embedding_dim = 4, dropout_p = 0.2)
+#     optim = torch.optim.Adam(model.parameters(), weight_decay=1e-3)
 
-    checkpoint = torch.load('test_model_and_optimizer_conti.pth')
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optim.load_state_dict(checkpoint['optimizer_state_dict'])
+#     checkpoint = torch.load('test_model_and_optimizer_conti.pth')
+#     model.load_state_dict(checkpoint['model_state_dict'])
+#     optim.load_state_dict(checkpoint['optimizer_state_dict'])
 
-    return model
+#     return model
 
 # model output의 인덱스에 따라 빈 값은 0으로 처리하고 (722, 6)의 shape으로 변환하는 함수 필요.
 
