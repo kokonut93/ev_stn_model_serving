@@ -77,7 +77,7 @@ def create_occupancy():
 if __name__=="__main__":
     attrs = pd.read_csv('data/station_attrs_final.csv')
     embed = pd.read_csv('data/station_embed_final.csv')
-    seq = pd.read_csv('data/station_seq_final.csv')
+    seq = pd.read_csv('data/station_seq_final_label.csv')
 
     create_station(attrs, embed)
     create_sequence(seq)
