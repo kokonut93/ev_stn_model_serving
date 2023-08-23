@@ -68,6 +68,19 @@ def db2Sid():
     sid = [res[0] for res in result]
     return sid
 
+def db2Now():
+    connection = db_connect()
+    now = get_dt().strftime('%Y-%m-%d %H:%M:%S')
+    select_query = f"SELECT * FROM sequence WHERE Time = '{now}'"
+
+    with connection.cursor() as cursor:
+        cursor.execute(select_query)
+        result = cursor.fetchall()
+        connection.close() 
+    
+    df = pd.DataFrame(result, columns=[col[0] for col in cursor.description])
+    return torch.tensor(df.set_index('Time').values).reshape(-1, 1)
+
 # get realtime sequence inputs from database
 def db2Rseq():
     connection = db_connect()
@@ -148,16 +161,19 @@ def db2S():
 from utils import *
 
 def y2db(outputs):
-    outputs = outputs.reshape(-1, 4)
-    
+    outputs = outputs.reshape(-1, 13)
+
     sid = db2Sid()
     connection = db_connect()
     update_query = "UPDATE occupancy SET {}"
     minutes = [20, 40, 60, 120]
+    labels = [0, 1, 2]
 
     for i in range(len(sid)):
-        output = outputs[i].tolist()
-        values = ' '.join([', '.join([f'Occupancy_{m} = {output[j]}' for j, m in enumerate(minutes)])] + [f'WHERE Sid = {sid[i]}'])
+        output = outputs[i].tolist()[1:]
+        label_query_values = ', '.join([f'Occupancy{k}_{m} = {output[3*m + j]}' for m in labels for j, k in enumerate(minutes)])
+        values = ' '.join([f'Occupancy0 = {outputs[i][0]}, '] + [label_query_values] + [f'WHERE Sid = {sid[i]}'])
+        
         with connection.cursor() as cursor:
             cursor.execute(update_query.format(values))
         

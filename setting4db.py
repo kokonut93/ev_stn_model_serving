@@ -52,8 +52,9 @@ def create_sequence(seq):
 def create_occupancy():
     connection = db_connect()
     minutes = [20, 40, 60, 120]
+    labels = [0, 1, 2]
     create_query = "CREATE TABLE IF NOT EXISTS occupancy ({}FOREIGN KEY (Sid) REFERENCES station(Sid))"
-    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, '] + [f'Occupancy_{i} FLOAT, ' for i in minutes])
+    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, Occupancy0 FLOAT NOT NULL, '] + [f'Occupancy{i}_{j} FLOAT, ' for j in labels for i in minutes])
 
     select_query = "SELECT sid FROM station"
 
@@ -65,8 +66,7 @@ def create_occupancy():
 
         insert_query = "INSERT INTO occupancy VALUES {};"
         for idx in result:
-            # values = tuple(list(idx) + [1])
-            values = tuple(list(idx) + [0, 0, 0, 0])
+            values = tuple(list(idx) + [0] * 13)
             with connection.cursor() as cursor:
                 cursor.execute(insert_query.format(values))
             
@@ -75,9 +75,9 @@ def create_occupancy():
 
 
 if __name__=="__main__":
-    attrs = pd.read_csv('data/station_attrs.csv')
-    embed = pd.read_csv('data/station_embed.csv')
-    seq = pd.read_csv('data/station_seq_conti.csv')
+    attrs = pd.read_csv('data/station_attrs_final.csv')
+    embed = pd.read_csv('data/station_embed_final.csv')
+    seq = pd.read_csv('data/station_seq_final.csv')
 
     create_station(attrs, embed)
     create_sequence(seq)
