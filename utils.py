@@ -161,7 +161,6 @@ def db2S():
 from utils import *
 
 def y2db(outputs):
-    outputs = outputs.reshape(-1, 13)
 
     sid = db2Sid()
     connection = db_connect()
@@ -171,7 +170,7 @@ def y2db(outputs):
 
     for i in range(len(sid)):
         output = outputs[i].tolist()[1:]
-        label_query_values = ', '.join([f'Occupancy{k}_{m} = {output[3*m + j]}' for m in labels for j, k in enumerate(minutes)])
+        label_query_values = ', '.join([f'Occupancy{k}_{m} = {output[m + 3*j]}' for m in labels for j, k in enumerate(minutes)])
         values = ' '.join([f'Occupancy0 = {outputs[i][0]}, '] + [label_query_values] + [f'WHERE Sid = {sid[i]}'])
         
         with connection.cursor() as cursor:

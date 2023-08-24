@@ -32,7 +32,10 @@ sudo systemctl start nginx
 # Encrypt (https)
 sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
 sudo yum-config-manager --enable epel
-sudo yum install certbot python3-certbot-nginx -y
+sudo yum install certbot python-certbot-nginx -y
+
+sudo cerbot --nginx
+
 
 # restart
 java -jar ./build/libs/plugissue-0.0.1-SNAPSHOT.jar &

@@ -54,7 +54,7 @@ def create_occupancy():
     minutes = [20, 40, 60, 120]
     labels = [0, 1, 2]
     create_query = "CREATE TABLE IF NOT EXISTS occupancy ({}FOREIGN KEY (Sid) REFERENCES station(Sid))"
-    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, Occupancy0 FLOAT NOT NULL, '] + [f'Occupancy{i}_{j} FLOAT, ' for j in labels for i in minutes])
+    values = ''.join(['Sid INT NOT NULL PRIMARY KEY, Occupancy0 FLOAT NOT NULL, '] + [f'Occupancy{i}_{j} FLOAT, ' for i in minutes for j in labels])
 
     select_query = "SELECT sid FROM station"
 
@@ -75,9 +75,9 @@ def create_occupancy():
 
 
 if __name__=="__main__":
-    attrs = pd.read_csv('data/station_attrs_final.csv')
-    embed = pd.read_csv('data/station_embed_final.csv')
-    seq = pd.read_csv('data/station_seq_final_label.csv')
+    attrs = pd.read_csv('data/station_attrs_final_630.csv')
+    embed = pd.read_csv('data/station_embed_final_630.csv')
+    seq = pd.read_csv('data/station_seq_final_630.csv')
 
     create_station(attrs, embed)
     create_sequence(seq)
