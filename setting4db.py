@@ -31,22 +31,42 @@ def create_sequence(seq):
     connection = db_connect()
     
     create_query = "CREATE TABLE IF NOT EXISTS sequence ({}PRIMARY KEY (Time))"
-    values = ''.join(['Time DATETIME NOT NULL, '] + [f'Sid_{col} DOUBLE NOT NULL, ' for col in seq.columns[1:]])
+    values = ''.join(['Time DATETIME NOT NULL, '] + [f'Sid_{col} INT NOT NULL, ' for col in seq.columns[1:]])
 
     with connection.cursor() as cursor:
         cursor.execute(create_query.format(values))
-
+        
     for _, row in seq.iterrows():
         values = tuple(row.values.tolist())
 
         insert_query = "INSERT INTO sequence VALUES {};".format(values)
-        
+    
         with connection.cursor() as cursor:
             cursor.execute(insert_query.format(values))
 
     connection.commit()
     connection.close()
 
+# Create Usage's Table
+def create_usage(usages):
+    connection = db_connect()
+    
+    create_query = "CREATE TABLE IF NOT EXISTS usages ({}PRIMARY KEY (Time))"
+    values = ''.join(['Time DATETIME NOT NULL, '] + [f'Sid_{col} INT NOT NULL, ' for col in usages.columns[1:]])
+
+    with connection.cursor() as cursor:
+        cursor.execute(create_query.format(values))
+
+    for _, row in usages.iterrows():
+        values = tuple(row.values.tolist())
+
+        insert_query = "INSERT INTO usages VALUES {};".format(values)
+        
+        with connection.cursor() as cursor:
+            cursor.execute(insert_query.format(values))
+
+    connection.commit()
+    connection.close()
 
 # Create Occupancy's Table
 def create_occupancy():
@@ -78,7 +98,10 @@ if __name__=="__main__":
     attrs = pd.read_csv('data/station_attrs_final_630.csv')
     embed = pd.read_csv('data/station_embed_final_630.csv')
     seq = pd.read_csv('data/station_seq_final_630.csv')
+    usages = pd.read_csv('data/station_seq_final_630.csv')
 
     create_station(attrs, embed)
     create_sequence(seq)
+    create_usage(usages)
     create_occupancy()
+    
