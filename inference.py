@@ -17,7 +17,7 @@ def handler(event, context):
         response = s3.get_object(Bucket=bucket_name, Key=object_key)
         data = response['Body'].read()
 
-        with open(f'./model_{i}.pt', 'wb') as file:
+        with open(f'/tmp/model_{i}.pt', 'wb') as file:
             file.write(data)
 
         models.append(torch.jit.load(f'/tmp/model_{i}.pt'))
