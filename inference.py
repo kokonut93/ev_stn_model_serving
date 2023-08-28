@@ -30,7 +30,7 @@ def handler(event, context):
 
     # model inference
     for i, m in enumerate(pred_steps):
-        globals()[f'res_{m}'] = models[i](r_seq.float(), h_seq[:, i, :, :].float(), t[:, i, :].int(), s_attrs.float())
+        globals()[f'res_{m}'] = torch.exp(models[i](r_seq.float(), h_seq[:, i, :, :].float(), t[:, i, :].int(), s_attrs.float()))
 
     # export output to database
     now = db2Now()
