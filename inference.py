@@ -5,37 +5,38 @@ import boto3
 def handler(event, context):
     # Load model
 
-    # load model from s3
-    # s3 = boto3.client('s3', aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
+    s3 = boto3.client('s3')
 
-    # bucket_name = 's3://bucket-plugissue'
-    # object_key = 'model.pt'
+    models = []
 
-    # response = s3.get_object(Bucket=bucket_name, Key=object_key)
-    # data = response['Body'].read()
+    bucket_name = 's3://bucket-plugissue'
+    pred_steps = [1, 2, 3, 6]
 
-    # # save model to local
-    # with open('./model.pt', 'wb') as file:
-    #     file.write(data)
+    for i in pred_steps:
+        object_key = f'model_output/{i}/MultiSeqUmapEmb_epoch-100_pred_step-{i}_model.pt'
+        response = s3.get_object(Bucket=bucket_name, Key=object_key)
+        data = response['Body'].read()
 
-    # load model from local
-    model = torch.jit.load('model.pt')
-    
-    # import input from database
+        with open(f'./model_{i}.pt', 'wb') as file:
+            file.write(data)
+
+        models.append(torch.jit.load(f'model_{i}.pt'))
+
+    # Load input from database
     r_seq = db2Rseq()
     h_seq = db2Hseq(h_step = 4)
     t = dt2T()
     s_attrs, _ = db2S()
 
     # model inference
-    minutes = [20, 40, 60, 120]
+    minutes = [1, 2, 3, 6]
 
     for i, m in enumerate(minutes):
-        globals()[f'res_{m}'] = model(r_seq.float(), h_seq[:, i, :, :].float(), t[:, i, :].int(), s_attrs.float())
+        globals()[f'res_{m}'] = models[i](r_seq.float(), h_seq[:, i, :, :].float(), t[:, i, :].int(), s_attrs.float())
 
     # export output to database
     now = db2Now()
-    outputs = torch.hstack([now, res_20, res_40, res_60, res_120])
+    outputs = torch.hstack([now, res_1, res_2, res_3, res_6])
 
     try:
         y2db(outputs) 
