@@ -29,9 +29,7 @@ def handler(event, context):
     s_attrs, _ = db2S()
 
     # model inference
-    minutes = [1, 2, 3, 6]
-
-    for i, m in enumerate(minutes):
+    for i, m in enumerate(pred_steps):
         globals()[f'res_{m}'] = models[i](r_seq.float(), h_seq[:, i, :, :].float(), t[:, i, :].int(), s_attrs.float())
 
     # export output to database
