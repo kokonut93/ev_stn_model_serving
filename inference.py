@@ -9,7 +9,7 @@ def handler(event, context):
 
     models = []
 
-    bucket_name = 's3://bucket-plugissue'
+    bucket_name = 'bucket-plugissue'
     pred_steps = [1, 2, 3, 6]
 
     for i in pred_steps:
@@ -20,7 +20,7 @@ def handler(event, context):
         with open(f'./model_{i}.pt', 'wb') as file:
             file.write(data)
 
-        models.append(torch.jit.load(f'model_{i}.pt'))
+        models.append(torch.jit.load(f'/tmp/model_{i}.pt'))
 
     # Load input from database
     r_seq = db2Rseq()
