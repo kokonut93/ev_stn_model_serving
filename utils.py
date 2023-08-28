@@ -6,12 +6,6 @@ import datetime
 import pymysql
 import torch
 
-# get current datetime
-def get_now():
-    now = datetime.datetime.now()
-    dt = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute//20*20, 00)
-    return dt.strftime('%Y-%m-%d %H:%M:%S')
-
 # get input's datetime
 def get_dt():
     now = datetime.datetime.now()

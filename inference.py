@@ -38,6 +38,6 @@ def handler(event, context):
 
     try:
         y2db(outputs) 
-        return {'status':'Success', 'time': f'{get_now()}'}
+        return {'status':'Success'}
 
     except: return {'status':'Failed'}
